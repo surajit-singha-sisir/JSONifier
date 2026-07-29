@@ -441,6 +441,92 @@
       dropzone.classList.add('border-indigo-500', 'bg-indigo-50/20');
     });
 
+    // Serverless API / Query Parameter Fetch Handler for GitHub Pages compat
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const targetUrl = params.get('url');
+      const format = params.get('format'); // 'json' | 'html'
+      
+      if (targetUrl) {
+        // Show loading spinner inside output screen
+        outputEmptyState.innerHTML = `
+          <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800 mb-4 text-slate-400">
+            <svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-200">Serverless Fetch: Loading file...</p>
+          <p class="text-xs text-slate-500 max-w-sm mt-1 truncate mx-auto">${targetUrl}</p>
+        `;
+        outputEmptyState.classList.remove('hidden');
+        
+        // Fetch external endpoint file
+        fetch(targetUrl)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+            return res.text();
+          })
+          .then(text => {
+            let result;
+            if (targetUrl.endsWith('.json') || text.trim().startsWith('{')) {
+              result = JSON.parse(text);
+              if (result && !result.school_data) {
+                result = { school_data: Array.isArray(result) ? result : [result] };
+              }
+            } else {
+              result = convertMarkdownToSchoolJson(text);
+            }
+            
+            // Format API mode check: if pure JSON output is requested
+            if (format === 'json') {
+              document.body.className = "bg-slate-950 p-6 m-0";
+              document.body.innerHTML = `
+                <pre class="text-emerald-400 text-xs font-mono leading-relaxed whitespace-pre-wrap select-text m-0">${JSON.stringify(result, null, 2)}</pre>
+              `;
+              return;
+            }
+            
+            // Otherwise render beautifully on our panel dashboard!
+            currentJsonData = result;
+            visualRoot = buildVisualTree(result);
+            
+            // Enable toolbar buttons
+            prettyModeBtn.removeAttribute('disabled');
+            minModeBtn.removeAttribute('disabled');
+            treeViewBtn.removeAttribute('disabled');
+            copyBtn.removeAttribute('disabled');
+            downloadBtn.removeAttribute('disabled');
+            
+            setViewMode('pretty');
+            outputEmptyState.classList.add('hidden');
+            
+            // Update metadata card
+            const school = result.school_data && result.school_data[0] ? result.school_data[0] : {};
+            statNameEn.textContent = school.institute_name_en || 'N/A';
+            statNameBn.textContent = school.institute_name_bn || 'N/A';
+            statDistrict.textContent = school.address ? school.address.district || 'N/A' : 'N/A';
+            statUpazila.textContent = school.address ? school.address.upazila_thana || 'N/A' : 'N/A';
+            statStaff.textContent = school.staff_positions ? school.staff_positions.length || 0 : 0;
+            statCommittee.textContent = school.committee_members ? school.committee_members.length || 0 : 0;
+            statBank.textContent = school.bank_accounts ? school.bank_accounts.length || 0 : 0;
+            statDev.textContent = school.development_projects ? school.development_projects.length || 0 : 0;
+            schoolStats.classList.remove('hidden');
+          })
+          .catch(err => {
+            console.error(err);
+            outputEmptyState.innerHTML = `
+              <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800 mb-4 text-rose-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <p class="text-sm font-semibold text-slate-200">Fetch API Failed</p>
+              <p class="text-xs text-rose-400 mt-1 max-w-sm mx-auto">${err.message}</p>
+              <p class="text-[10px] text-slate-500 mt-2 max-w-xs mx-auto">Note: Ensure the target server has CORS headers enabled, or try utilizing a CORS proxy.</p>
+            `;
+          });
+      }
+    });
+
     // Handle File Processing
     function handleFileSelect() {
       const file = fileInput.files[0];
@@ -589,7 +675,7 @@
       nodesGroup.innerHTML = '';
       
       prettyModeBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-600 bg-transparent disabled:opacity-50";
-      minModeBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-600 bg-transparent hover:text-slate-800 disabled:opacity-50";
+      minModeBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-600 bg-transparent disabled:opacity-50";
       treeViewBtn.className = "inline-flex items-center px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-indigo-600 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-sm gap-1.5";
 
       prettyModeBtn.setAttribute('disabled', 'true');
@@ -779,7 +865,6 @@
       return 'text-emerald-400 font-normal';
     }
 
-    // Format value
     function formatVal(val) {
       if (val === null || val === 'null' || val === '') return 'null';
       return String(val);
