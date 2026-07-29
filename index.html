@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Info Markdown-to-JSON Converter</title>
+  <title>JSONifier - EMIS School Info Converter</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts (Plus Jakarta Sans & JetBrains Mono) -->
@@ -67,7 +67,7 @@
           <i data-lucide="school" class="w-6 h-6"></i>
         </div>
         <div>
-          <h1 class="text-lg font-bold text-slate-900 leading-tight">EMIS School Info Converter</h1>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">JSONifier</h1>
           <p class="text-xs text-slate-500">Transform Markdown outputs to strict JSON templates with Pretty & Tree visualization</p>
         </div>
       </div>
@@ -341,7 +341,7 @@
   <!-- Footer -->
   <footer class="bg-white border-t border-slate-200 py-6 mt-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-xs text-slate-500">
-      <p>&copy; 2026 EMIS Converter. All rights reserved.</p>
+      <p>&copy; 2026 JSONifier. All rights reserved.</p>
       <div class="flex space-x-4">
         <a href="#" class="hover:text-indigo-600 transition-colors">Terms of Service</a>
         <a href="#" class="hover:text-indigo-600 transition-colors">Privacy Policy</a>
@@ -675,7 +675,7 @@
       nodesGroup.innerHTML = '';
       
       prettyModeBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-600 bg-transparent disabled:opacity-50";
-      minModeBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-600 bg-transparent disabled:opacity-50";
+      minModeBtn.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition-colors text-slate-600 bg-transparent hover:text-slate-800 disabled:opacity-50";
       treeViewBtn.className = "inline-flex items-center px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-indigo-600 disabled:opacity-50 disabled:pointer-events-none transition-colors shadow-sm gap-1.5";
 
       prettyModeBtn.setAttribute('disabled', 'true');
@@ -865,6 +865,7 @@
       return 'text-emerald-400 font-normal';
     }
 
+    // Format value
     function formatVal(val) {
       if (val === null || val === 'null' || val === '') return 'null';
       return String(val);
@@ -1623,7 +1624,7 @@
 
       // Map center coordinate back to SVG pan values
       const targetTranslateX = containerWidth / 2 - focalX * targetScale;
-      const targetTranslateY = containerHeight / 2 - focalY * targetScale;
+      const targetTranslateY = containerHeight / 2 - centerY * targetScale;
 
       // Update canvas transformations with smooth transition animations
       smoothPanTo(targetTranslateX, targetTranslateY);
